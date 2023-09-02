@@ -1,13 +1,22 @@
 import { User } from "./user.model";
 import * as WebSocket from 'ws';
+import { v4 as uuidv4 } from 'uuid';
 
-class Game {
-    private users: User[] = [];
+export default class Game {
+    private static users: Map<string, User> = new Map();
 
-    AddUser(socket: WebSocket) {
-        this.users.push(new User(socket));
-        console.log(`Usuarios conectados: ${this.users.length}`)
+    static AddUser(socket: WebSocket) {
+        this.RemoveUser = this.RemoveUser.bind(this);
+
+        const uuid = uuidv4();
+        socket.on('close', () => { this.RemoveUser(uuid); });
+        this.users.set(uuid, new User(socket, uuid));
+        console.log(`Usuario conectado: ${uuid}`);
+        console.log(`Usuarios conectados: ${this.users.size}`);
+    }
+    static RemoveUser(uuid: string) {
+        this.users.delete(uuid);
+        console.log(`Usuario desconectado: ${uuid}`);
+        console.log(`Usuarios conectados: ${this.users.size}`);
     }
 }
-
-export default new Game();
